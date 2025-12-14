@@ -130,14 +130,19 @@ scale={w}:{h},fps={fps},setsar=1{v_all}",
         // Countdown expression (MM:SS):
         // minutes = floor(max(0, GUESS - t)/60)
         // seconds = mod(floor(max(0, GUESS - t)), 60)
-        let countdown_text = format!(
-            "%{{eif\\:floor(max(0\\,{guess_s:.3}-t)/60)\\:02d}}\\:%{{eif\\:mod(floor(max(0\\,{guess_s:.3}-t))\\,60)\\:02d}}"
-        );
+        let countdown_text =
+    format!("%{{eif\\:max(0\\,ceil({guess_s:.3}-t))\\:d}}");
 
-        parts.push(format!(
-            "color=c=black:s={w}x{h}:r={fps}:d={guess_s:.3},\
-drawtext=text='{countdown_text}':x=(w-text_w)/2:y=(h-text_h)/2:fontsize=96:fontcolor=white:borderw=4{v_g}"
-        ));
+
+
+parts.push(format!(
+    "color=c=black:s={w}x{h}:r={fps}:d={guess_s:.3},\
+drawtext=text='{countdown_text}':\
+x=(w-text_w)/2:y=(h-text_h)/2:\
+fontsize=96:fontcolor=white:borderw=4{v_g}"
+));
+
+
 
         // Guess audio: first segment [0, guess]
         parts.push(format!(
