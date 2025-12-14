@@ -4,7 +4,21 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
-use blindtest::load_project;
+use blindtest::{load_project, validate::validate_project};
+
+fn main() -> Result<()> {
+    let cli = Cli::parse();
+
+    match cli.command {
+        Commands::Render { input } => {
+            let project = load_project(&input)?;
+            validate_project(&project)?;
+            dbg!(project);
+        }
+    }
+
+    Ok(())
+}
 
 #[derive(Parser, Debug)]
 #[command(name = "blindtest")]
@@ -22,17 +36,3 @@ enum Commands {
         input: PathBuf,
     },
 }
-
-fn main() -> Result<()> {
-    let cli = Cli::parse();
-
-    match cli.command {
-        Commands::Render { input } => {
-            let project = load_project(&input)?;
-            dbg!(project);
-        }
-    }
-
-    Ok(())
-}
-
