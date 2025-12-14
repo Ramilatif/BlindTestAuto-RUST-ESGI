@@ -28,6 +28,8 @@ enum Commands {
         #[arg(long)]
         dry_run: bool,
     },
+    /// Interactive wizard to generate a montage JSON (V1 format)
+    New,
 }
 
 fn main() -> Result<()> {
@@ -46,6 +48,11 @@ fn main() -> Result<()> {
             }
 
             ffmpeg::run(&spec)?;
+        }
+        Commands::New => {
+            let (project, json_path) = blindtest::wizard::run_new_wizard()?;
+            blindtest::wizard::write_project_json(&json_path, &project)?;
+            println!("✅ JSON généré : {}", json_path);
         }
     }
 

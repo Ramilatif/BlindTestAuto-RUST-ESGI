@@ -5,6 +5,7 @@ pub mod ffmpeg_command;
 pub mod model;
 pub mod timecode;
 pub mod validate;
+pub mod wizard;
 
 use anyhow::{Context, Result};
 use std::fs::File;
