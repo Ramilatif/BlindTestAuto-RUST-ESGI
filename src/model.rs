@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 /// Root JSON document
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct Project {
     pub output: Output,
     pub timings: Timings,
@@ -11,36 +12,39 @@ pub struct Project {
 
 /// Output rendering parameters
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct Output {
-    /// Path of the final rendered video file (e.g. "render/blindtest.mp4")
+    /// Path of the final rendered video file
     pub path: String,
 
     /// Optional output resolution like "1920x1080"
     #[serde(default)]
     pub resolution: Option<String>,
 
-    /// Optional output frames per second (e.g. 30)
+    /// Optional output frames per second
     #[serde(default)]
     pub fps: Option<u32>,
 }
 
 /// Global timings applied to every clip
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct Timings {
-    /// Duration of the "guess" phase: audio only, video hidden (e.g. "00:00:10.000")
+    /// Duration of the "guess" phase
     pub guess_duration: String,
 
-    /// Duration of the "reveal" phase: video + answer overlay (e.g. "00:00:05.000")
+    /// Duration of the "reveal" phase
     pub reveal_duration: String,
 }
 
 /// One blindtest item
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct Clip {
     /// Source video file path
     pub video: String,
 
-    /// Start timecode in the source video (e.g. "00:01:23.500")
+    /// Start timecode in the source video
     pub start: String,
 
     /// Answer text displayed during the reveal phase
