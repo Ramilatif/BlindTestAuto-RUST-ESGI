@@ -2,13 +2,13 @@
 
 use crate::model::Project;
 use crate::timecode::parse_timecode_ms;
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CommandSpec {
-    pub program: String,      // "ffmpeg"
-    pub args: Vec<String>,     // argv
+    pub program: String,   // "ffmpeg"
+    pub args: Vec<String>, // argv
 }
 
 /// Build a single-ffmpeg command (Option B) using `-filter_complex`.
@@ -123,26 +123,21 @@ scale={w}:{h},fps={fps},setsar=1{v_all}",
         ));
 
         // 3) Split
-       // parts.push(format!("{v_all}split=2{v_gsrc}{v_rsrc}"));
+        // parts.push(format!("{v_all}split=2{v_gsrc}{v_rsrc}"));
         parts.push(format!("{a_all}asplit=2{a_gsrc}{a_rsrc}"));
 
         // 4) Guess video: black screen + countdown MM:SS
         // Countdown expression (MM:SS):
         // minutes = floor(max(0, GUESS - t)/60)
         // seconds = mod(floor(max(0, GUESS - t)), 60)
-        let countdown_text =
-    format!("%{{eif\\:max(0\\,ceil({guess_s:.3}-t))\\:d}}");
+        let countdown_text = format!("%{{eif\\:max(0\\,ceil({guess_s:.3}-t))\\:d}}");
 
-
-
-parts.push(format!(
-    "color=c=black:s={w}x{h}:r={fps}:d={guess_s:.3},\
+        parts.push(format!(
+            "color=c=black:s={w}x{h}:r={fps}:d={guess_s:.3},\
 drawtext=text='{countdown_text}':\
 x=(w-text_w)/2:y=(h-text_h)/2:\
 fontsize=96:fontcolor=white:borderw=4{v_g}"
-));
-
-
+        ));
 
         // Guess audio: first segment [0, guess]
         parts.push(format!(
@@ -162,9 +157,7 @@ drawtext=text='{answer}':x=(w-text_w)/2:y=h-(text_h*2):fontsize=48:fontcolor=whi
         ));
 
         // 6) Concat guess+reveal into one segment per clip
-        parts.push(format!(
-            "{v_g}{a_g}{v_r}{a_r}concat=n=2:v=1:a=1{v_i}{a_i}"
-        ));
+        parts.push(format!("{v_g}{a_g}{v_r}{a_r}concat=n=2:v=1:a=1{v_i}{a_i}"));
     }
 
     // Final concat of all clips
@@ -172,7 +165,10 @@ drawtext=text='{answer}':x=(w-text_w)/2:y=h-(text_h*2):fontsize=48:fontcolor=whi
     for i in 0..inputs.len() {
         concat_in.push_str(&format!("[v{i}][a{i}]"));
     }
-    parts.push(format!("{concat_in}concat=n={}:v=1:a=1[vout][aout]", inputs.len()));
+    parts.push(format!(
+        "{concat_in}concat=n={}:v=1:a=1[vout][aout]",
+        inputs.len()
+    ));
 
     Ok(parts.join(";"))
 }
@@ -248,10 +244,16 @@ mod tests {
         // Has black guess screen with countdown
         assert!(fc.contains("color=c=black"));
         assert!(fc.contains("drawtext=text="));
-        assert!(fc.contains("max(0\\,10.000-t)"), "filter_complex was:\n{fc}");
+        assert!(
+            fc.contains("max(0\\,10.000-t)"),
+            "filter_complex was:\n{fc}"
+        );
 
         // Has answer overlay in reveal (with escaped quote)
-        assert!(fc.contains("Guns N\\' Roses - Live"), "filter_complex was:\n{fc}");
+        assert!(
+            fc.contains("Guns N\\' Roses - Live"),
+            "filter_complex was:\n{fc}"
+        );
 
         // Final concat outputs
         assert!(fc.contains("[vout][aout]"));
@@ -277,7 +279,9 @@ mod tests {
             .clone();
 
         // Should contain both clip labels and concat n=2
-        assert!(fc.contains("[v0][a0][v1][a1]concat=n=2:v=1:a=1[vout][aout]"), "filter_complex was:\n{fc}");
+        assert!(
+            fc.contains("[v0][a0][v1][a1]concat=n=2:v=1:a=1[vout][aout]"),
+            "filter_complex was:\n{fc}"
+        );
     }
 }
-

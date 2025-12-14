@@ -6,8 +6,8 @@ use std::path::PathBuf;
 
 use blindtest::ffmpeg;
 use blindtest::ffmpeg_command::build_ffmpeg_command;
-use blindtest::validate::validate_project;
 use blindtest::load_project;
+use blindtest::validate::validate_project;
 
 #[derive(Parser, Debug)]
 #[command(name = "blindtest")]
@@ -51,4 +51,3 @@ fn main() -> Result<()> {
 
     Ok(())
 }
-

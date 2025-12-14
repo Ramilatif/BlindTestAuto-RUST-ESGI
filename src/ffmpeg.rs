@@ -1,7 +1,7 @@
 // src/ffmpeg.rs
 
 use crate::ffmpeg_command::CommandSpec;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use std::process::{Command, Stdio};
 
 /// Run the provided ffmpeg command spec.
@@ -46,11 +46,10 @@ pub fn format_command(spec: &CommandSpec) -> String {
 
 fn quote_arg(arg: &str) -> String {
     // Simple quoting: if it contains whitespace or quotes, wrap in double quotes and escape double quotes.
-    if arg.chars().any(|c| c.is_whitespace() || c == '"' ) {
+    if arg.chars().any(|c| c.is_whitespace() || c == '"') {
         let escaped = arg.replace('"', r#"\""#);
         format!("\"{escaped}\"")
     } else {
         arg.to_string()
     }
 }
-

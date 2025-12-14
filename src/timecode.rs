@@ -1,5 +1,5 @@
 // src/timecode.rs
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 
 /// Parse a timecode formatted as `HH:MM:SS.mmm` into milliseconds.
 ///
@@ -17,10 +17,14 @@ pub fn parse_timecode_ms(s: &str) -> Result<u64> {
         bail!("invalid timecode separators (expected HH:MM:SS.mmm): '{s}'");
     }
 
-    let hh = parse_2_digits(&s[0..2]).with_context(|| format!("invalid hours in timecode '{s}'"))?;
-    let mm = parse_2_digits(&s[3..5]).with_context(|| format!("invalid minutes in timecode '{s}'"))?;
-    let ss = parse_2_digits(&s[6..8]).with_context(|| format!("invalid seconds in timecode '{s}'"))?;
-    let mmm = parse_3_digits(&s[9..12]).with_context(|| format!("invalid milliseconds in timecode '{s}'"))?;
+    let hh =
+        parse_2_digits(&s[0..2]).with_context(|| format!("invalid hours in timecode '{s}'"))?;
+    let mm =
+        parse_2_digits(&s[3..5]).with_context(|| format!("invalid minutes in timecode '{s}'"))?;
+    let ss =
+        parse_2_digits(&s[6..8]).with_context(|| format!("invalid seconds in timecode '{s}'"))?;
+    let mmm = parse_3_digits(&s[9..12])
+        .with_context(|| format!("invalid milliseconds in timecode '{s}'"))?;
 
     if mm > 59 {
         bail!("minutes out of range (0..59) in timecode '{s}'");
@@ -30,10 +34,8 @@ pub fn parse_timecode_ms(s: &str) -> Result<u64> {
     }
     // mmm is 0..999 by construction (3 digits)
 
-    let total_ms = (hh as u64) * 3_600_000
-        + (mm as u64) * 60_000
-        + (ss as u64) * 1_000
-        + (mmm as u64);
+    let total_ms =
+        (hh as u64) * 3_600_000 + (mm as u64) * 60_000 + (ss as u64) * 1_000 + (mmm as u64);
 
     Ok(total_ms)
 }
@@ -94,4 +96,3 @@ mod tests {
         assert!(parse_timecode_ms("00:00:60.000").is_err());
     }
 }
-

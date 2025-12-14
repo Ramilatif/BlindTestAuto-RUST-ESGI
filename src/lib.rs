@@ -1,10 +1,10 @@
 // src/lib.rs
 
+pub mod ffmpeg;
+pub mod ffmpeg_command;
 pub mod model;
 pub mod timecode;
 pub mod validate;
-pub mod ffmpeg_command;
-pub mod ffmpeg;
 
 use anyhow::{Context, Result};
 use std::fs::File;
@@ -17,8 +17,8 @@ use crate::model::Project;
 pub fn load_project<P: AsRef<Path>>(path: P) -> Result<Project> {
     let path_ref = path.as_ref();
 
-    let mut file =
-        File::open(path_ref).with_context(|| format!("failed to open JSON file: {}", path_ref.display()))?;
+    let mut file = File::open(path_ref)
+        .with_context(|| format!("failed to open JSON file: {}", path_ref.display()))?;
 
     // Read the whole file to provide better error messages if JSON is invalid.
     let mut buf = String::new();
@@ -71,7 +71,9 @@ mod tests {
 
         let err = load_project_from_reader(json.as_bytes()).unwrap_err();
         // On ne teste pas tout le message (ça peut changer), juste que c'est une erreur.
-        assert!(err.to_string().contains("invalid JSON") || err.to_string().contains("missing field"));
+        assert!(
+            err.to_string().contains("invalid JSON") || err.to_string().contains("missing field")
+        );
     }
 }
 
@@ -84,9 +86,9 @@ mod parsing_tests {
         load_project_from_reader(s.as_bytes())
     }
 
-#[test]
-fn fails_on_unknown_fields() {
-    let json = r#"
+    #[test]
+    fn fails_on_unknown_fields() {
+        let json = r#"
     {
       "output": { "path": "render/out.mp4", "fps": 30, "unknown": 123 },
       "timings": { "guess_duration": "00:00:10.000", "reveal_duration": "00:00:05.000" },
@@ -96,11 +98,11 @@ fn fails_on_unknown_fields() {
     }
     "#;
 
-    let err = parse(json).unwrap_err();
+        let err = parse(json).unwrap_err();
 
-    // `to_string()` peut n'afficher que le contexte ("invalid JSON").
-    // `{:#}` inclut généralement toute la chaîne d'erreurs (causes).
-    let full = format!("{:#}", err);
-    assert!(full.contains("unknown field"), "error was:\n{full}");
-}
+        // `to_string()` peut n'afficher que le contexte ("invalid JSON").
+        // `{:#}` inclut généralement toute la chaîne d'erreurs (causes).
+        let full = format!("{:#}", err);
+        assert!(full.contains("unknown field"), "error was:\n{full}");
+    }
 }

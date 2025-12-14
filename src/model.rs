@@ -50,4 +50,3 @@ pub struct Clip {
     /// Answer text displayed during the reveal phase
     pub answer: String,
 }
-

@@ -1,5 +1,5 @@
 // src/validate.rs
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 
 use crate::model::Project;
 use crate::timecode::parse_timecode_ms;
@@ -57,13 +57,21 @@ pub fn validate_project(p: &Project) -> Result<()> {
 
 fn is_resolution(s: &str) -> bool {
     // Simple strict check: <digits>x<digits> and both > 0
-    let Some((w, h)) = s.split_once('x') else { return false };
-    if w.is_empty() || h.is_empty() { return false; }
+    let Some((w, h)) = s.split_once('x') else {
+        return false;
+    };
+    if w.is_empty() || h.is_empty() {
+        return false;
+    }
     if !w.chars().all(|c| c.is_ascii_digit()) || !h.chars().all(|c| c.is_ascii_digit()) {
         return false;
     }
-    let Ok(w) = w.parse::<u32>() else { return false };
-    let Ok(h) = h.parse::<u32>() else { return false };
+    let Ok(w) = w.parse::<u32>() else {
+        return false;
+    };
+    let Ok(h) = h.parse::<u32>() else {
+        return false;
+    };
     w > 0 && h > 0
 }
 
@@ -143,4 +151,3 @@ mod tests {
         assert!(validate_project(&p).is_err());
     }
 }
-
