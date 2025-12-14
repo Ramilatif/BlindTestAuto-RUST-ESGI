@@ -3,6 +3,8 @@
 pub mod model;
 pub mod timecode;
 pub mod validate;
+pub mod ffmpeg_command;
+pub mod ffmpeg;
 
 use anyhow::{Context, Result};
 use std::fs::File;
