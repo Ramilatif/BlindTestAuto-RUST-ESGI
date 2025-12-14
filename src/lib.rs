@@ -1,6 +1,8 @@
 // src/lib.rs
 
 pub mod model;
+pub mod timecode;
+pub mod validate;
 
 use anyhow::{Context, Result};
 use std::fs::File;
