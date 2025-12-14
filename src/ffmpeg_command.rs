@@ -99,8 +99,8 @@ fn build_filter_complex(
         // Labels
         let v_all = format!("[v{i}all]");
         let a_all = format!("[a{i}all]");
-        let v_gsrc = format!("[v{i}gsrc]");
-        let v_rsrc = format!("[v{i}rsrc]");
+        //let v_gsrc = format!("[v{i}gsrc]");
+        //let v_rsrc = format!("[v{i}rsrc]");
         let a_gsrc = format!("[a{i}gsrc]");
         let a_rsrc = format!("[a{i}rsrc]");
         let v_g = format!("[v{i}g]");
@@ -123,7 +123,7 @@ scale={w}:{h},fps={fps},setsar=1{v_all}",
         ));
 
         // 3) Split
-        parts.push(format!("{v_all}split=2{v_gsrc}{v_rsrc}"));
+       // parts.push(format!("{v_all}split=2{v_gsrc}{v_rsrc}"));
         parts.push(format!("{a_all}asplit=2{a_gsrc}{a_rsrc}"));
 
         // 4) Guess video: black screen + countdown MM:SS
@@ -147,7 +147,7 @@ drawtext=text='{countdown_text}':x=(w-text_w)/2:y=(h-text_h)/2:fontsize=96:fontc
         // 5) Reveal video: trim [guess, guess+reveal] + answer overlay
         let answer = escape_drawtext_text(clip.answer.trim());
         parts.push(format!(
-            "{v_rsrc}trim=start={guess_s:.3}:duration={reveal_s:.3},setpts=PTS-STARTPTS,\
+            "{v_all}trim=start={guess_s:.3}:duration={reveal_s:.3},setpts=PTS-STARTPTS,\
 drawtext=text='{answer}':x=(w-text_w)/2:y=h-(text_h*2):fontsize=48:fontcolor=white:borderw=3{v_r}"
         ));
 
