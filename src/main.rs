@@ -1,6 +1,6 @@
 // src/main.rs
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
@@ -29,7 +29,12 @@ enum Commands {
         dry_run: bool,
     },
     /// Interactive wizard to generate a montage JSON (V1 format)
-    New,
+    New {
+        #[arg(long)]
+        quick: bool,
+        /// Dossier contenant les clips vidéo (requis avec --quick)
+        folder: Option<PathBuf>,
+    },
 }
 
 fn main() -> Result<()> {
@@ -49,12 +54,17 @@ fn main() -> Result<()> {
 
             ffmpeg::run(&spec)?;
         }
-        Commands::New => {
-            let (project, json_path) = blindtest::wizard::run_new_wizard()?;
+        Commands::New { quick, folder } => {
+            let (project, json_path) = if quick {
+                let folder = folder.context("Avec --quick, vous devez fournir un dossier")?;
+                blindtest::wizard::run_quick(folder)?
+            } else {
+                blindtest::wizard::run_new_wizard()?
+            };
+
             blindtest::wizard::write_project_json(&json_path, &project)?;
             println!("✅ JSON généré : {}", json_path);
         }
     }
-
     Ok(())
 }

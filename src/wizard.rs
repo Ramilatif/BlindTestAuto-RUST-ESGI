@@ -2,10 +2,10 @@
 
 use crate::model::{Clip, Output, Project, Timings};
 use crate::timecode::parse_timecode_ms;
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use inquire::{Confirm, Text};
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub fn run_new_wizard() -> Result<(Project, String)> {
     // Où écrire le JSON
@@ -115,4 +115,66 @@ fn prompt_timecode(question: &str, default: &str) -> Result<String> {
 
         eprintln!("❌ Format invalide. Exemple attendu: 00:00:10.000");
     }
+}
+
+/// Quick mode:
+/// - takes a folder
+/// - uses all `.mp4` files
+/// - filename (without extension) = answer
+/// - default timings / output
+pub fn run_quick(folder: PathBuf) -> Result<(Project, String)> {
+    if !folder.exists() || !folder.is_dir() {
+        bail!("Le dossier '{}' n'existe pas", folder.display());
+    }
+
+    let mut entries: Vec<PathBuf> = fs::read_dir(&folder)
+        .with_context(|| format!("Impossible de lire {}", folder.display()))?
+        .filter_map(|e| e.ok())
+        .map(|e| e.path())
+        .filter(|p| {
+            p.extension()
+                .and_then(|e| e.to_str())
+                .map(|e| e.eq_ignore_ascii_case("mp4"))
+                .unwrap_or(false)
+        })
+        .collect();
+
+    if entries.is_empty() {
+        bail!("Aucun fichier .mp4 trouvé dans {}", folder.display());
+    }
+
+    // Ordre stable
+    entries.sort();
+
+    let clips: Vec<Clip> = entries
+        .iter()
+        .map(|path| {
+            let answer = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("Unknown")
+                .to_string();
+
+            Clip {
+                video: path.to_string_lossy().to_string(),
+                start: "00:00:00.000".into(),
+                answer,
+            }
+        })
+        .collect();
+
+    let project = Project {
+        output: Output {
+            path: "render/blindtest.mp4".into(),
+            resolution: Some("1280x720".into()),
+            fps: Some(30),
+        },
+        timings: Timings {
+            guess_duration: "00:00:10.000".into(),
+            reveal_duration: "00:00:05.000".into(),
+        },
+        clips,
+    };
+
+    Ok((project, "montage.json".into()))
 }
