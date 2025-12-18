@@ -1,5 +1,5 @@
 // src/validate.rs
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 
 use crate::model::Project;
 use crate::timecode::parse_timecode_ms;
@@ -7,6 +7,25 @@ use crate::timecode::parse_timecode_ms;
 pub fn validate_project(p: &Project) -> Result<()> {
     if p.output.path.trim().is_empty() {
         bail!("output.path must not be empty");
+    }
+
+    // intro (optional)
+    if let Some(intro) = p.intro.as_ref() {
+        if intro.background.trim().is_empty() {
+            bail!("intro.background must not be empty");
+        }
+        if intro.music.trim().is_empty() {
+            bail!("intro.music must not be empty");
+        }
+        if intro.title.trim().is_empty() {
+            bail!("intro.title must not be empty");
+        }
+
+        let intro_ms = parse_timecode_ms(intro.duration.trim())
+            .context("intro.duration is invalid")?;
+        if intro_ms == 0 {
+            bail!("intro.duration must be > 0");
+        }
     }
 
     // timings: parse + strictly > 0
@@ -78,10 +97,11 @@ fn is_resolution(s: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{Clip, Output, Timings};
+    use crate::model::{Clip, Intro, Output, Timings};
 
     fn base_project() -> Project {
         Project {
+            intro: None,
             output: Output {
                 path: "render/out.mp4".into(),
                 resolution: Some("1920x1080".into()),
@@ -150,4 +170,41 @@ mod tests {
         p.output.fps = Some(0);
         assert!(validate_project(&p).is_err());
     }
+
+    #[test]
+    fn intro_valid_passes() {
+        let mut p = base_project();
+        p.intro = Some(Intro {
+            background: "assets/intro.png".into(),
+            title: "Blind Test".into(),
+            music: "assets/intro.mp3".into(),
+            duration: "00:00:03.000".into(),
+        });
+        validate_project(&p).unwrap();
+    }
+
+    #[test]
+    fn intro_rejects_zero_duration() {
+        let mut p = base_project();
+        p.intro = Some(Intro {
+            background: "assets/intro.png".into(),
+            title: "Blind Test".into(),
+            music: "assets/intro.mp3".into(),
+            duration: "00:00:00.000".into(),
+        });
+        assert!(validate_project(&p).is_err());
+    }
+
+    #[test]
+    fn intro_rejects_empty_fields() {
+        let mut p = base_project();
+        p.intro = Some(Intro {
+            background: "   ".into(),
+            title: "".into(),
+            music: " ".into(),
+            duration: "00:00:03.000".into(),
+        });
+        assert!(validate_project(&p).is_err());
+    }
 }
+
