@@ -245,9 +245,10 @@ mod tests {
         assert!(fc.contains("color=c=black"));
         assert!(fc.contains("drawtext=text="));
         assert!(
-            fc.contains("max(0\\,10.000-t)"),
-            "filter_complex was:\n{fc}"
-        );
+        fc.contains("drawtext=text='%{eif\\:max(0\\,ceil(10.000-t))\\:d}'"),
+    "filter_complex was:\n{fc}"
+);
+
 
         // Has answer overlay in reveal (with escaped quote)
         assert!(
