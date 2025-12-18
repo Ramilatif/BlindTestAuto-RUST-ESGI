@@ -31,6 +31,9 @@ enum Commands {
     /// Interactive wizard to generate a montage JSON (V1 format)
     New {
         #[arg(long)]
+        shuffle: bool,
+
+        #[arg(long)]
         quick: bool,
         /// Dossier contenant les clips vidéo (requis avec --quick)
         folder: Option<PathBuf>,
@@ -54,10 +57,10 @@ fn main() -> Result<()> {
 
             ffmpeg::run(&spec)?;
         }
-        Commands::New { quick, folder } => {
+        Commands::New { quick, folder, shuffle } => {
             let (project, json_path) = if quick {
                 let folder = folder.context("Avec --quick, vous devez fournir un dossier")?;
-                blindtest::wizard::run_quick(folder)?
+                blindtest::wizard::run_quick(folder, shuffle)?
             } else {
                 blindtest::wizard::run_new_wizard()?
             };
