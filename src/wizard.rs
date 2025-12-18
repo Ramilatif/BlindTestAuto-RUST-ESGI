@@ -1,5 +1,3 @@
-// src/wizard.rs
-
 use crate::model::{Clip, Output, Project, Timings};
 use crate::timecode::parse_timecode_ms;
 use anyhow::{bail, Context, Result};
@@ -9,29 +7,23 @@ use rand::thread_rng;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-/// Wizard interactif (grand public) : pose des questions et génère un Project + chemin JSON.
+/// Wizard interactif (assistant guidé)
 pub fn run_new_wizard() -> Result<(Project, String)> {
-    // Où écrire le JSON
     let json_path = Text::new("Chemin du fichier JSON à générer ?")
         .with_default("montage.json")
         .prompt()?;
 
-    // Output vidéo
-    let output_path = Text::new("Fichier vidéo de sortie (output.path) ?")
+    let output_path = Text::new("Fichier vidéo de sortie ?")
         .with_default("render/blindtest.mp4")
         .prompt()?;
 
-    // Optionnels
-    let resolution = Text::new("Résolution (optionnel, ex: 1280x720) ? (laisser vide pour défaut)")
+    let resolution = Text::new("Résolution (optionnel, ex: 1280x720)")
         .with_default("")
         .prompt()?;
-    let resolution = if resolution.trim().is_empty() {
-        None
-    } else {
-        Some(resolution.trim().to_string())
-    };
+    let resolution = (!resolution.trim().is_empty())
+        .then(|| resolution.trim().to_string());
 
-    let fps = Text::new("FPS (optionnel, ex: 30) ? (laisser vide pour défaut)")
+    let fps = Text::new("FPS (optionnel, ex: 30)")
         .with_default("")
         .prompt()?;
     let fps = if fps.trim().is_empty() {
@@ -40,18 +32,16 @@ pub fn run_new_wizard() -> Result<(Project, String)> {
         Some(
             fps.trim()
                 .parse::<u32>()
-                .context("FPS invalide (doit être un entier)")?,
+                .context("FPS invalide")?,
         )
     };
 
-    // Timings (format strict)
     let guess_duration =
-        prompt_timecode("Durée devinette (HH:MM:SS.mmm) ?", "00:00:10.000")?;
+        prompt_timecode("Durée devinette (HH:MM:SS.mmm)", "00:00:10.000")?;
     let reveal_duration =
-        prompt_timecode("Durée révélation (HH:MM:SS.mmm) ?", "00:00:05.000")?;
+        prompt_timecode("Durée révélation (HH:MM:SS.mmm)", "00:00:05.000")?;
 
-    // Clips
-    let mut clips: Vec<Clip> = Vec::new();
+    let mut clips = Vec::new();
     loop {
         let add = Confirm::new("Ajouter un clip ?")
             .with_default(clips.is_empty())
@@ -60,26 +50,27 @@ pub fn run_new_wizard() -> Result<(Project, String)> {
             break;
         }
 
-        let video = Text::new("Chemin de la vidéo source ?")
+        let video = Text::new("Chemin de la vidéo")
             .with_default("videos/clip.mp4")
             .prompt()?;
 
-        let start = prompt_timecode("Timecode de départ (HH:MM:SS.mmm) ?", "00:00:00.000")?;
+        let start =
+            prompt_timecode("Timecode de départ", "00:00:00.000")?;
 
-        let answer = Text::new("Réponse à afficher (titre / artiste) ?")
+        let answer = Text::new("Réponse à afficher")
             .with_default("Artiste - Titre")
             .prompt()?;
 
         clips.push(Clip {
-            video: video.trim().to_string(),
+            video,
             start,
-            answer: answer.trim().to_string(),
+            answer,
         });
     }
 
     let project = Project {
         output: Output {
-            path: output_path.trim().to_string(),
+            path: output_path,
             resolution,
             fps,
         },
@@ -93,19 +84,13 @@ pub fn run_new_wizard() -> Result<(Project, String)> {
     Ok((project, json_path))
 }
 
-/// Mode rapide:
-/// - folder: dossier où sont les .mp4
-/// - answer = nom du fichier sans extension
-/// - start = 00:00:00.000
-/// - timings/output = valeurs par défaut
-/// - shuffle optionnel
+/// Mode quick : dossier -> JSON + vidéo
 pub fn run_quick(folder: PathBuf, shuffle: bool) -> Result<(Project, String)> {
     if !folder.exists() || !folder.is_dir() {
-        bail!("Le dossier '{}' n'existe pas ou n'est pas un dossier", folder.display());
+        bail!("Dossier invalide : {}", folder.display());
     }
 
-    let mut entries: Vec<PathBuf> = fs::read_dir(&folder)
-        .with_context(|| format!("Impossible de lire {}", folder.display()))?
+    let mut files: Vec<PathBuf> = fs::read_dir(&folder)?
         .filter_map(|e| e.ok())
         .map(|e| e.path())
         .filter(|p| {
@@ -116,30 +101,25 @@ pub fn run_quick(folder: PathBuf, shuffle: bool) -> Result<(Project, String)> {
         })
         .collect();
 
-    if entries.is_empty() {
-        bail!("Aucun fichier .mp4 trouvé dans {}", folder.display());
+    if files.is_empty() {
+        bail!("Aucun fichier .mp4 trouvé");
     }
 
-    // Ordre stable par défaut, puis shuffle optionnel
-    entries.sort();
+    files.sort();
     if shuffle {
-        entries.shuffle(&mut thread_rng());
+        files.shuffle(&mut thread_rng());
     }
 
-    let clips: Vec<Clip> = entries
+    let clips = files
         .iter()
-        .map(|path| {
-            let answer = path
+        .map(|p| Clip {
+            video: p.to_string_lossy().to_string(),
+            start: "00:00:00.000".into(),
+            answer: p
                 .file_stem()
                 .and_then(|s| s.to_str())
                 .unwrap_or("Unknown")
-                .to_string();
-
-            Clip {
-                video: path.to_string_lossy().to_string(),
-                start: "00:00:00.000".into(),
-                answer,
-            }
+                .to_string(),
         })
         .collect();
 
@@ -159,18 +139,22 @@ pub fn run_quick(folder: PathBuf, shuffle: bool) -> Result<(Project, String)> {
     Ok((project, "montage.json".into()))
 }
 
-/// Écrit un Project en JSON pretty sur disque.
-pub fn write_project_json<P: AsRef<Path>>(path: P, project: &Project) -> Result<()> {
-    let s = serde_json::to_string_pretty(project).context("impossible de sérialiser le JSON")?;
+/// Écriture du JSON pretty
+pub fn write_project_json<P: AsRef<Path>>(
+    path: P,
+    project: &Project,
+) -> Result<()> {
+    let json = serde_json::to_string_pretty(project)?;
     let path = path.as_ref();
 
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {
-            fs::create_dir_all(parent).ok(); // best-effort
+            fs::create_dir_all(parent).ok();
         }
     }
 
-    fs::write(path, s).with_context(|| format!("impossible d'écrire {}", path.display()))?;
+    fs::write(path, json)
+        .with_context(|| format!("Impossible d'écrire {}", path.display()))?;
     Ok(())
 }
 
@@ -183,7 +167,7 @@ fn prompt_timecode(question: &str, default: &str) -> Result<String> {
             return Ok(tc);
         }
 
-        eprintln!("❌ Format invalide. Exemple attendu: 00:00:10.000");
+        eprintln!("❌ Format invalide (ex: 00:00:10.000)");
     }
 }
 

@@ -1,17 +1,14 @@
-// src/main.rs
-
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
-use blindtest::ffmpeg;
-use blindtest::ffmpeg_command::build_ffmpeg_command;
-use blindtest::load_project;
-use blindtest::validate::validate_project;
+use blindtest::{
+    build_ffmpeg_command, ffmpeg, load_project, validate_project,
+};
 
 #[derive(Parser, Debug)]
 #[command(name = "blindtest")]
-#[command(about = "Blindtest video builder")]
+#[command(about = "Automatic blind test video generator")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -19,23 +16,33 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    /// Render a blindtest from a JSON description
+    /// Render a blindtest from a JSON file
     Render {
-        /// Path to the JSON montage file
         input: PathBuf,
 
-        /// Print the ffmpeg command without running it
         #[arg(long)]
         dry_run: bool,
     },
-    /// Interactive wizard to generate a montage JSON (V1 format)
+
+    /// Create a new montage JSON (interactive or quick)
     New {
+        /// Quick mode: generate from a folder of mp4 files
+        #[arg(long)]
+        quick: bool,
+
+        /// Shuffle clips order (only meaningful with --quick)
         #[arg(long)]
         shuffle: bool,
 
+        /// In quick mode: only generate JSON, do not render video
         #[arg(long)]
-        quick: bool,
-        /// Dossier contenant les clips vidéo (requis avec --quick)
+        only_json: bool,
+
+        /// Print ffmpeg command without running it (quick mode)
+        #[arg(long)]
+        dry_run: bool,
+
+        /// Folder containing video clips (required with --quick)
         folder: Option<PathBuf>,
     },
 }
@@ -57,17 +64,52 @@ fn main() -> Result<()> {
 
             ffmpeg::run(&spec)?;
         }
-        Commands::New { quick, folder, shuffle } => {
+
+        Commands::New {
+            quick,
+            shuffle,
+            only_json,
+            dry_run,
+            folder,
+        } => {
             let (project, json_path) = if quick {
-                let folder = folder.context("Avec --quick, vous devez fournir un dossier")?;
+                let folder =
+                    folder.context("Avec --quick, vous devez fournir un dossier")?;
                 blindtest::wizard::run_quick(folder, shuffle)?
             } else {
                 blindtest::wizard::run_new_wizard()?
             };
 
+            // 1) Validation
+            validate_project(&project)?;
+
+            // 2) Écriture du JSON (toujours utile comme trace)
             blindtest::wizard::write_project_json(&json_path, &project)?;
             println!("✅ JSON généré : {}", json_path);
+
+            // 3) Rendu automatique en quick
+            if quick && !only_json {
+                if let Some(parent) =
+                    std::path::Path::new(&project.output.path).parent()
+                {
+                    if !parent.as_os_str().is_empty() {
+                        std::fs::create_dir_all(parent).ok();
+                    }
+                }
+
+                let spec = build_ffmpeg_command(&project)?;
+
+                if dry_run {
+                    println!("{}", ffmpeg::format_command(&spec));
+                    return Ok(());
+                }
+
+                ffmpeg::run(&spec)?;
+                println!("🎬 Vidéo générée : {}", project.output.path);
+            }
         }
     }
+
     Ok(())
 }
+

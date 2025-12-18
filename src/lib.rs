@@ -7,6 +7,10 @@ pub mod timecode;
 pub mod validate;
 pub mod wizard;
 
+pub use crate::ffmpeg_command::build_ffmpeg_command;
+pub use crate::validate::validate_project;
+
+
 use anyhow::{Context, Result};
 use std::fs::File;
 use std::io::Read;
