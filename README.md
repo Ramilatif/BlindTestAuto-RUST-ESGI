@@ -1,8 +1,8 @@
 # 🎵 BlindTestAuto (Rust)
 
-BlindTestAuto est un outil en ligne de commande écrit en **Rust** qui permet de **générer automatiquement une vidéo de blind test** à partir de clips vidéo.
+BlindTestAuto est un outil en ligne de commande écrit en **Rust** permettant de **générer automatiquement une vidéo de blind test** à partir de clips vidéo.
 
-Le montage est entièrement automatisé grâce à **FFmpeg** et un fichier de configuration **JSON** (généré à la main ou via un assistant interactif).
+Le montage est entièrement automatisé grâce à **FFmpeg** et un fichier de configuration **JSON**, généré manuellement ou via un assistant interactif.
 
 ---
 
@@ -18,46 +18,46 @@ Pour chaque clip :
   - vidéo visible
   - réponse affichée à l’écran
 
-Les clips sont ensuite concaténés automatiquement.
+Les clips sont concaténés automatiquement pour produire une seule vidéo finale.
 
 ---
 
 ### 🎞️ Introduction optionnelle (V2)
-Avant le blind test, il est possible d’ajouter une **intro** :
+Avant le blind test, il est possible d’ajouter une **introduction** :
 - image de fond
-- titre centré à l’écran
+- titre affiché à l’écran
 - musique d’introduction
 - durée personnalisée
 
-L’intro est **optionnelle** et n’est ajoutée que si elle est définie.
+L’introduction est **optionnelle**.
 
 ---
 
-### ⚡ Mode rapide (pour utilisateurs non techniques)
-Un seul dossier de vidéos suffit :
+### ⚡ Mode rapide (utilisateur lambda)
+À partir d’un simple dossier de vidéos :
 
 ```bash
 blindtest new --quick ./videos
 ```
 
 - tous les fichiers `.mp4` sont utilisés
-- le nom du fichier devient la réponse
-- un `montage.json` est généré automatiquement
+- le nom du fichier devient automatiquement la réponse
+- un `montage.json` est généré
 - la vidéo finale est rendue directement
 
-Options disponibles :
+Options :
 - `--shuffle` : mélange l’ordre des clips
-- `--only-json` : génère uniquement le JSON (pas de rendu)
+- `--only-json` : génère uniquement le JSON
 - `--dry-run` : affiche la commande FFmpeg sans lancer le rendu
 
 ---
 
 ### 🧙 Mode interactif (assistant guidé)
 Un assistant en ligne de commande permet de :
-- définir une intro (optionnelle)
-- configurer la sortie vidéo
-- choisir les durées
-- ajouter les clips un par un
+- configurer une intro (optionnelle)
+- choisir la sortie vidéo
+- définir les durées
+- ajouter les clips manuellement
 
 ```bash
 blindtest new
@@ -65,14 +65,40 @@ blindtest new
 
 ---
 
-### 📄 Format JSON clair et validé
-Le projet repose sur un fichier JSON strictement validé (types, champs obligatoires, timecodes).
+### 📄 Format JSON strictement validé
+
+```json
+{
+  "intro": {
+    "background": "assets/intro.png",
+    "title": "Blind Test Soirée",
+    "music": "assets/intro.mp3",
+    "duration": "00:00:05.000"
+  },
+  "output": {
+    "path": "render/blindtest.mp4",
+    "resolution": "1280x720",
+    "fps": 30
+  },
+  "timings": {
+    "guess_duration": "00:00:10.000",
+    "reveal_duration": "00:00:05.000"
+  },
+  "clips": [
+    {
+      "video": "videos/clip1.mp4",
+      "start": "00:00:01.000",
+      "answer": "Daft Punk - One More Time"
+    }
+  ]
+}
+```
 
 ---
 
 ## 🚀 Utilisation
 
-### Mode rapide (recommandé)
+### Mode rapide
 ```bash
 blindtest new --quick ./videos
 ```
@@ -91,6 +117,113 @@ blindtest new
 ```bash
 blindtest render montage.json
 ```
+
+### Debug FFmpeg
+```bash
+blindtest render montage.json --dry-run
+```
+
+---
+
+## 🧱 Compilation
+
+### Prérequis
+
+- **Rust** (stable)  
+  Installation : https://rustup.rs
+
+Vérification :
+```bash
+rustc --version
+cargo --version
+```
+
+- **FFmpeg** (obligatoire)
+
+Vérification :
+```bash
+ffmpeg -version
+```
+
+---
+
+### Compilation (développement)
+
+```bash
+cargo build
+```
+
+Binaire généré :
+```text
+target/debug/blindtest
+```
+
+---
+
+### Compilation optimisée (recommandée)
+
+```bash
+cargo build --release
+```
+
+Binaire généré :
+```text
+target/release/blindtest
+```
+
+---
+
+### Exécution après compilation
+
+```bash
+./target/release/blindtest --help
+```
+
+Exemples :
+```bash
+./target/release/blindtest new --quick ./videos
+./target/release/blindtest render montage.json
+```
+
+---
+
+### Tests
+
+```bash
+cargo test
+```
+
+Les tests couvrent :
+- parsing JSON
+- validation métier
+- génération FFmpeg
+- assistant interactif
+- gestion de l’introduction
+
+---
+
+### Nettoyage
+
+```bash
+cargo clean
+```
+
+---
+
+## 🎯 Objectifs pédagogiques (ESGI)
+
+- automatiser un montage vidéo répétitif
+- rendre l’outil accessible aux non-développeurs
+- architecture Rust modulaire et testée
+- séparation claire parsing / validation / rendu
+
+---
+
+## 🔮 Évolutions possibles
+- transitions (fade, animations)
+- interface graphique
+- export YouTube / TikTok
+- détection BPM / silence
 
 ---
 
