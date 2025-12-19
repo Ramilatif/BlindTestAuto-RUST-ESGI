@@ -1,122 +1,98 @@
-# BlindTestAuto (V1)
+# 🎵 BlindTestAuto (Rust)
 
-BlindTestAuto est un outil en **Rust** permettant de générer automatiquement une vidéo de **blind test musical** à partir d’un fichier **JSON** descriptif.
+BlindTestAuto est un outil en ligne de commande écrit en **Rust** qui permet de **générer automatiquement une vidéo de blind test** à partir de clips vidéo.
 
-La V1 se concentre sur une pipeline simple, robuste et testée, basée sur **FFmpeg**.
-
----
-
-## Fonctionnalités (V1)
-
-- Lecture d’un fichier JSON décrivant le blind test
-- Découpage automatique des clips vidéo à partir de timecodes
-- Deux phases par clip :
-  - **Phase devinette** : écran noir + musique + minuteur
-  - **Phase révélation** : affichage de la vidéo + réponse à l’écran
-- Concaténation automatique de plusieurs clips
-- Génération d’une **seule commande FFmpeg** (`filter_complex`)
-- Mode `--dry-run` pour afficher la commande sans exécuter FFmpeg
-- Validation stricte des données (JSON + règles métier)
-- Tests unitaires (parsing, validation, génération de commande)
+Le montage est entièrement automatisé grâce à **FFmpeg** et un fichier de configuration **JSON** (généré à la main ou via un assistant interactif).
 
 ---
 
-## Prérequis
+## ✨ Fonctionnalités (V1 + V2)
 
-- **Rust** (stable)
-- **FFmpeg** accessible dans le `PATH`
-
----
-
-## Utilisation
-
-### 1. Exemple de fichier JSON
-
-```json
-{
-  "output": {
-    "path": "render/blindtest.mp4",
-    "resolution": "1280x720",
-    "fps": 30
-  },
-  "timings": {
-    "guess_duration": "00:00:10.000",
-    "reveal_duration": "00:00:05.000"
-  },
-  "clips": [
-    {
-      "video": "videos/clip1.mp4",
-      "start": "00:01:00.000",
-      "answer": "Daft Punk - One More Time"
-    },
-    {
-      "video": "videos/clip2.mp4",
-      "start": "00:00:30.500",
-      "answer": "Nirvana - Smells Like Teen Spirit"
-    }
-  ]
-}
-```
-
----
-
-### 2. Générer la commande FFmpeg (dry-run)
-
-```bash
-cargo run -- render montage.json --dry-run
-```
-
----
-
-### 3. Générer la vidéo finale
-
-```bash
-cargo run -- render montage.json
-```
-
----
-
-## Fonctionnement interne (V1)
-
+### 🎬 Génération automatique de blind test
 Pour chaque clip :
+- **Phase Devinette**
+  - écran noir
+  - musique du clip
+  - minuteur en secondes
+- **Phase Révélation**
+  - vidéo visible
+  - réponse affichée à l’écran
 
-1. Découpe de la vidéo source à partir du `start`
-2. Séparation audio en deux segments :
-   - devinette
-   - révélation
-3. Génération d’un écran noir pour la phase devinette
-4. Affichage du minuteur
-5. Affichage de la réponse pendant la phase révélation
-6. Concaténation des segments
-7. Concaténation finale de tous les clips
-
-Tout le montage est réalisé via un **unique appel FFmpeg**.
+Les clips sont ensuite concaténés automatiquement.
 
 ---
 
-## Limitations connues (V1)
+### 🎞️ Introduction optionnelle (V2)
+Avant le blind test, il est possible d’ajouter une **intro** :
+- image de fond
+- titre centré à l’écran
+- musique d’introduction
+- durée personnalisée
 
-- Les fichiers vidéo doivent contenir une piste audio
-- Pas de vérification de l’existence des fichiers avant l’appel à FFmpeg
+L’intro est **optionnelle** et n’est ajoutée que si elle est définie.
 
 ---
 
-## Tests
+### ⚡ Mode rapide (pour utilisateurs non techniques)
+Un seul dossier de vidéos suffit :
 
 ```bash
-cargo test
+blindtest new --quick ./videos
+```
+
+- tous les fichiers `.mp4` sont utilisés
+- le nom du fichier devient la réponse
+- un `montage.json` est généré automatiquement
+- la vidéo finale est rendue directement
+
+Options disponibles :
+- `--shuffle` : mélange l’ordre des clips
+- `--only-json` : génère uniquement le JSON (pas de rendu)
+- `--dry-run` : affiche la commande FFmpeg sans lancer le rendu
+
+---
+
+### 🧙 Mode interactif (assistant guidé)
+Un assistant en ligne de commande permet de :
+- définir une intro (optionnelle)
+- configurer la sortie vidéo
+- choisir les durées
+- ajouter les clips un par un
+
+```bash
+blindtest new
 ```
 
 ---
 
-## Statut du projet
-
-- ✅ Version : **V1 stable**
-- 🎯 Objectif atteint : génération automatique de blind tests vidéo
-- 🔒 API et format JSON considérés comme stables pour la V1
+### 📄 Format JSON clair et validé
+Le projet repose sur un fichier JSON strictement validé (types, champs obligatoires, timecodes).
 
 ---
 
-## Licence
+## 🚀 Utilisation
 
-Projet pédagogique / expérimental.
+### Mode rapide (recommandé)
+```bash
+blindtest new --quick ./videos
+```
+
+### Mode rapide sans rendu
+```bash
+blindtest new --quick ./videos --only-json
+```
+
+### Mode interactif
+```bash
+blindtest new
+```
+
+### Rendu depuis un JSON existant
+```bash
+blindtest render montage.json
+```
+
+---
+
+## 📄 Licence
+Projet pédagogique – ESGI
