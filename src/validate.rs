@@ -1,5 +1,5 @@
 // src/validate.rs
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 
 use crate::model::Project;
 use crate::timecode::parse_timecode_ms;
@@ -21,8 +21,8 @@ pub fn validate_project(p: &Project) -> Result<()> {
             bail!("intro.title must not be empty");
         }
 
-        let intro_ms = parse_timecode_ms(intro.duration.trim())
-            .context("intro.duration is invalid")?;
+        let intro_ms =
+            parse_timecode_ms(intro.duration.trim()).context("intro.duration is invalid")?;
         if intro_ms == 0 {
             bail!("intro.duration must be > 0");
         }
@@ -207,4 +207,3 @@ mod tests {
         assert!(validate_project(&p).is_err());
     }
 }
-

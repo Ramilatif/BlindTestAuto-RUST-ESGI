@@ -2,7 +2,7 @@
 
 use crate::model::Project;
 use crate::timecode::parse_timecode_ms;
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -202,9 +202,7 @@ drawtext=text='{answer}':x=(w-text_w)/2:y=h-(text_h*2):fontsize=48:fontcolor=whi
         ));
 
         // 6) Concat guess+reveal into one segment per clip
-        parts.push(format!(
-            "{v_g}{a_g}{v_r}{a_r}concat=n=2:v=1:a=1{v_i}{a_i}"
-        ));
+        parts.push(format!("{v_g}{a_g}{v_r}{a_r}concat=n=2:v=1:a=1{v_i}{a_i}"));
     }
 
     // Final concat
@@ -222,9 +220,7 @@ drawtext=text='{answer}':x=(w-text_w)/2:y=h-(text_h*2):fontsize=48:fontcolor=whi
         concat_in.push_str(&format!("[v{i}][a{i}]"));
     }
 
-    parts.push(format!(
-        "{concat_in}concat=n={n}:v=1:a=1[vout][aout]"
-    ));
+    parts.push(format!("{concat_in}concat=n={n}:v=1:a=1[vout][aout]"));
 
     Ok(parts.join(";"))
 }
@@ -347,8 +343,14 @@ mod tests {
 
         // args should contain intro inputs
         let joined = spec.args.join(" ");
-        assert!(joined.contains("-loop 1 -i assets/intro.png"), "args were:\n{joined}");
-        assert!(joined.contains("-i assets/intro.mp3"), "args were:\n{joined}");
+        assert!(
+            joined.contains("-loop 1 -i assets/intro.png"),
+            "args were:\n{joined}"
+        );
+        assert!(
+            joined.contains("-i assets/intro.mp3"),
+            "args were:\n{joined}"
+        );
 
         let fc = spec
             .args
@@ -363,7 +365,10 @@ mod tests {
         assert!(fc.contains("[aintro]"));
 
         // final concat has intro + 1 clip => n=2
-        assert!(fc.contains("concat=n=2:v=1:a=1[vout][aout]"), "filter_complex was:\n{fc}");
+        assert!(
+            fc.contains("concat=n=2:v=1:a=1[vout][aout]"),
+            "filter_complex was:\n{fc}"
+        );
     }
 
     #[test]
@@ -391,4 +396,3 @@ mod tests {
         );
     }
 }
-

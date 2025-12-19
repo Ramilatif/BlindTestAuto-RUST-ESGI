@@ -1,6 +1,6 @@
 use crate::model::{Clip, Intro, Output, Project, Timings};
 use crate::timecode::parse_timecode_ms;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use inquire::{Confirm, Text};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -14,9 +14,10 @@ pub fn run_new_wizard() -> Result<(Project, String)> {
         .prompt()?;
 
     // --- INTRO (optionnelle) ---
-    let add_intro = Confirm::new("Ajouter une introduction (image + titre + musique) avant le blindtest ?")
-        .with_default(true)
-        .prompt()?;
+    let add_intro =
+        Confirm::new("Ajouter une introduction (image + titre + musique) avant le blindtest ?")
+            .with_default(true)
+            .prompt()?;
 
     let intro: Option<Intro> = if add_intro {
         let background = Text::new("Chemin de l'image de fond (ex: assets/intro.png) ?")
@@ -63,10 +64,8 @@ pub fn run_new_wizard() -> Result<(Project, String)> {
     };
 
     // --- TIMINGS ---
-    let guess_duration =
-        prompt_timecode("Durée devinette (HH:MM:SS.mmm)", "00:00:10.000")?;
-    let reveal_duration =
-        prompt_timecode("Durée révélation (HH:MM:SS.mmm)", "00:00:05.000")?;
+    let guess_duration = prompt_timecode("Durée devinette (HH:MM:SS.mmm)", "00:00:10.000")?;
+    let reveal_duration = prompt_timecode("Durée révélation (HH:MM:SS.mmm)", "00:00:05.000")?;
 
     // --- CLIPS ---
     let mut clips: Vec<Clip> = Vec::new();
@@ -203,4 +202,3 @@ fn prompt_timecode(question: &str, default: &str) -> Result<String> {
         eprintln!("❌ Format invalide (ex: 00:00:10.000)");
     }
 }
-
