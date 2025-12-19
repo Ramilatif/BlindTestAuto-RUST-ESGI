@@ -5,9 +5,30 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Project {
+    /// Optional intro shown before the blindtest starts
+    #[serde(default)]
+    pub intro: Option<Intro>,
+
     pub output: Output,
     pub timings: Timings,
     pub clips: Vec<Clip>,
+}
+
+/// Optional intro section
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct Intro {
+    /// Background image path (png/jpg)
+    pub background: String,
+
+    /// Title displayed on the intro screen
+    pub title: String,
+
+    /// Music file played during intro (mp3/wav/...)
+    pub music: String,
+
+    /// Intro duration (HH:MM:SS.mmm)
+    pub duration: String,
 }
 
 /// Output rendering parameters

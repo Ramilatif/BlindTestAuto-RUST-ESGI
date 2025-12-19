@@ -2,9 +2,9 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
-use blindtest::{ffmpeg, load_project};
 use blindtest::ffmpeg_command::build_ffmpeg_command;
 use blindtest::validate::validate_project;
+use blindtest::{ffmpeg, load_project};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -42,10 +42,7 @@ Exemples :\n\
         )]
         input: PathBuf,
 
-        #[arg(
-            long,
-            help = "Affiche la commande FFmpeg sans lancer le rendu"
-        )]
+        #[arg(long, help = "Affiche la commande FFmpeg sans lancer le rendu")]
         dry_run: bool,
     },
 
@@ -78,10 +75,7 @@ Exemples :\n\
         )]
         quick: bool,
 
-        #[arg(
-            long,
-            help = "Mélange l'ordre des clips (utile avec --quick)"
-        )]
+        #[arg(long, help = "Mélange l'ordre des clips (utile avec --quick)")]
         shuffle: bool,
 
         #[arg(
@@ -132,8 +126,8 @@ fn main() -> Result<()> {
             folder,
         } => {
             let (project, json_path) = if quick {
-                let folder = folder
-                    .context("Avec --quick, vous devez fournir un dossier (ex: ./videos)")?;
+                let folder =
+                    folder.context("Avec --quick, vous devez fournir un dossier (ex: ./videos)")?;
                 blindtest::wizard::run_quick(folder, shuffle)?
             } else {
                 blindtest::wizard::run_new_wizard()?
@@ -145,9 +139,7 @@ fn main() -> Result<()> {
             println!("✅ JSON généré : {}", json_path);
 
             if quick && !only_json {
-                if let Some(parent) =
-                    std::path::Path::new(&project.output.path).parent()
-                {
+                if let Some(parent) = std::path::Path::new(&project.output.path).parent() {
                     if !parent.as_os_str().is_empty() {
                         std::fs::create_dir_all(parent).ok();
                     }
@@ -168,4 +160,3 @@ fn main() -> Result<()> {
 
     Ok(())
 }
-
